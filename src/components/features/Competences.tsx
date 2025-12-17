@@ -69,7 +69,7 @@ export function Competences() {
     const y = useTransform(scrollYProgress, [0, 1], [-300, 350]);
 
     return (
-        <div className="flex flex-col lg:mt-60 md:mt-[400px] mt-64" id="Competences">
+        <div className="flex flex-col mt-64 md:mt-[400px] lg:mt-60" id="Competences">
             <h1 className="md:text-5xl text-4xl text-center mb-12 font3 text-[#0a001a] dark:text-[#efe5ff]">Mes compétences</h1>
             <span className="text-2xl text-center mb-12 font3 text-[#0a001a] dark:text-[#efe5ff]">Principaux</span>
             

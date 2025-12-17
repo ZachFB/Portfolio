@@ -49,19 +49,19 @@ export const HeroDetail = () => {
     }, [tick, delta]);
 
     return (
-        <div className="flex flex-row z-10 font2">
+        <div className="flex justify-center align-center z-10 font2">
             <motion.div
                 initial={{ x: -150 }}
                 animate={{ x: 0 }}
                 transition={{ duration: 0.6 }}
             >
-                <Avatar className="md:w-60 md:h-60 w-36 h-36 mt-40  lg:ml-[76px] ml-3">
+                <Avatar className="md:w-60 md:h-60 w-36 h-36 mt-40 lg:w-[250px] lg:h-[250px]">
                     <AvatarImage src={zackImage} />
-                    <AvatarFallback>ZACK</AvatarFallback>#a877fd
+                    <AvatarFallback>ZACK</AvatarFallback>
                 </Avatar>
             </motion.div>
-            <div className="relative lg:pl-8 pl-3 lg:ml-12 md:m-5 m-2 md:h-60 h-[160px] w-[670px] dark:bg-[#a877fd] bg-[#330288] z-10 rounded-xl md:mt-40 mt-40 ">
-                <h1 className="md:mt-10 mt-5 md:text-6xl text-3xl text-left xs:ml-6 mb-6 dark:text-[#0a001a] text-[#efe5ff] ">{text}</h1>
+            <div className="relative lg:pl-8 pl-3 lg:ml-12 md:m-5 m-2 md:h-60 h-[160px] w-[670px] lg:w-[800px] lg:h-72 xl:w-[900px] xl:h-80 dark:bg-[#a877fd] bg-[#330288] z-10 rounded-xl md:mt-32 mt-40">
+                <h1 className="md:mt-10 mt-5 md:text-6xl text-3xl text-left xs:ml-6 mb-6 dark:text-[#0a001a] text-[#efe5ff] lg:text-7xl">{text}</h1>
                 <AvatarC />
             </div>
         </div>
