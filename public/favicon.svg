@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#efe5ff" />
+      <stop offset="55%" stop-color="#a877fd" />
+      <stop offset="100%" stop-color="#6f3fe0" />
+    </linearGradient>
+    <linearGradient id="flameGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#63e8ff" />
+      <stop offset="100%" stop-color="#a877fd" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <circle cx="16" cy="15" r="14" fill="#0a001a" />
+
+  <path d="M16 4 C21 8 23 14 21 21 L11 21 C9 14 11 8 16 4 Z" fill="url(#bodyGrad)" />
+  <circle cx="16" cy="14" r="3.2" fill="#0a001a" />
+  <circle cx="16" cy="14" r="1.8" fill="#63e8ff" />
+
+  <path d="M11 18 L6 22 L11 21.5 Z" fill="#6f3fe0" />
+  <path d="M21 18 L26 22 L21 21.5 Z" fill="#6f3fe0" />
+
+  <path d="M13.5 21 L18.5 21 L16.5 27 C16.2 28 15.8 28 15.5 27 Z" fill="url(#flameGrad)" />
+</svg>
