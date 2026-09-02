@@ -40,10 +40,15 @@ export function Competences() {
 
     // Refs pour détecter la visibilité
     const cardsContainerRef = useRef<HTMLDivElement>(null);
+    // Marge de déclenchement volontairement légère : un "-100px" sur les 4
+    // côtés (valeur pensée pour desktop) rétrécissait trop la zone de
+    // détection sur mobile, où le conteneur (4 cartes empilées en
+    // flex-col) est bien plus haut que la fenêtre visible réelle du
+    // téléphone — les pourcentages ne se déclenchaient quasiment jamais.
     const isCardsInView = useInView(cardsContainerRef, {
         once: true,
-        amount: 0.3,
-        margin: "-100px"
+        amount: 0.15,
+        margin: "-20px"
     });
 
     // États pour les compteurs (un par carte de compétence principale)
