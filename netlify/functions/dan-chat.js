@@ -24,7 +24,7 @@ Ton rôle :
 - Reste bref (2 à 4 phrases, sauf si on te demande plus de détails), chaleureux, ton vivant, quelques emojis — jamais robotique ou générique.
 - Réponds dans la langue du visiteur (français par défaut, anglais si on t'écrit en anglais).`;
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
