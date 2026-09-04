@@ -26,15 +26,19 @@ Ton rôle :
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: JSON.stringify({ error: "Method Not Allowed" }) };
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: "Method Not Allowed" }),
+    };
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.DANKEY;
   if (!apiKey) {
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: "GEMINI_API_KEY manquante côté serveur. Ajoute-la dans Netlify → Site settings → Environment variables, puis redéploie.",
+        error:
+          "DANKEY manquante côté serveur. Ajoute-la dans Netlify → Site settings → Environment variables, puis redéploie.",
       }),
     };
   }
@@ -43,16 +47,29 @@ exports.handler = async (event) => {
   try {
     payload = JSON.parse(event.body || "{}");
   } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: "JSON invalide." }) };
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: "JSON invalide." }),
+    };
   }
 
   const { message, history } = payload;
   if (!message || typeof message !== "string" || message.length > 1000) {
-    return { statusCode: 400, body: JSON.stringify({ error: "Message manquant ou trop long (max 1000 caractères)." }) };
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: "Message manquant ou trop long (max 1000 caractères).",
+      }),
+    };
   }
 
   const contents = (Array.isArray(history) ? history.slice(-10) : [])
-    .filter((m) => m && typeof m.text === "string" && (m.from === "dan" || m.from === "user"))
+    .filter(
+      (m) =>
+        m &&
+        typeof m.text === "string" &&
+        (m.from === "dan" || m.from === "user"),
+    )
     .map((m) => ({
       role: m.from === "dan" ? "model" : "user",
       parts: [{ text: m.text }],
@@ -70,14 +87,17 @@ exports.handler = async (event) => {
           contents,
           generationConfig: { temperature: 0.8, maxOutputTokens: 300 },
         }),
-      }
+      },
     );
 
     const data = await res.json();
 
     if (!res.ok) {
       const reason = data?.error?.message || "Erreur inconnue de l'API Gemini.";
-      return { statusCode: res.status, body: JSON.stringify({ error: reason }) };
+      return {
+        statusCode: res.status,
+        body: JSON.stringify({ error: reason }),
+      };
     }
 
     const reply =
@@ -86,6 +106,9 @@ exports.handler = async (event) => {
 
     return { statusCode: 200, body: JSON.stringify({ reply }) };
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: "Impossible de joindre l'API Gemini." }) };
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Impossible de joindre l'API Gemini." }),
+    };
   }
 };
