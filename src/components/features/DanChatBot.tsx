@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { gsap } from "@/lib/gsapConfig";
 import { prefersReducedMotion } from "@/lib/motionPrefs";
 import { useTilt3D } from "@/lib/useTilt3D";
-import { DAN_SUGGESTIONS, findDanAnswer } from "@/lib/danKnowledge";
+import { DAN_SUGGESTIONS } from "@/lib/danKnowledge";
 import { DanCharacter, type DanMood } from "./DanCharacter";
 
 interface Message {
@@ -29,7 +29,6 @@ export const DanChatBot = () => {
 
   const bubbleRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const panelWrapperRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const idleTweenRef = useRef<gsap.core.Tween | null>(null);
   const greetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -37,23 +36,6 @@ export const DanChatBot = () => {
 
   const [mood, setMood] = useState<DanMood>("idle");
 
-  // Ferme le chat au clic en dehors du panneau (et de la bulle qui l'ouvre) —
-  // sauf si l'utilisateur a commencé à taper un message, pour ne jamais lui
-  // faire perdre ce qu'il était en train d'écrire.
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (input.trim().length > 0) return;
-      const target = e.target as Node;
-      if (panelWrapperRef.current?.contains(target)) return;
-      if (bubbleRef.current?.contains(target)) return;
-      setIsOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen, input]);
-
-  // Entrée + flottement idle 3D du bouton (léger wobble façon "objet emballé")
   useEffect(() => {
     if (!bubbleRef.current) return;
     const reduced = prefersReducedMotion();
@@ -84,9 +66,6 @@ export const DanChatBot = () => {
     return () => ctx.revert();
   }, []);
 
-  // Ouverture / fermeture : on met en pause le flottement de la bulle et on
-  // déclenche le salut de Dan (avec son petit tour sur lui-même) au moment
-  // où il apparaît au-dessus du chat.
   useEffect(() => {
     if (isOpen) {
       idleTweenRef.current?.pause();
@@ -101,9 +80,6 @@ export const DanChatBot = () => {
     };
   }, [isOpen]);
 
-  // Dan réagit à ce qui se passe réellement dans le chat : il "marche",
-  // attentif, pendant que l'utilisateur tape, et "réfléchit" (fait les cent
-  // pas) pendant qu'il génère sa réponse.
   useEffect(() => {
     if (!isOpen) return;
     if (isTyping) setMood("thinking");
@@ -111,9 +87,6 @@ export const DanChatBot = () => {
     else setMood((m) => (m === "greet" ? m : "idle"));
   }, [isTyping, input, isOpen]);
 
-  // Mesure la vraie hauteur du panneau (au lieu de deviner une valeur en vh)
-  // pour positionner Dan exactement au-dessus, quelle que soit la taille de
-  // la fenêtre — c'est ce qui évite qu'il se retrouve hors champ en haut.
   useLayoutEffect(() => {
     if (!isOpen) return;
     const panel = panelRef.current;
@@ -129,7 +102,6 @@ export const DanChatBot = () => {
     };
   }, [isOpen]);
 
-  // Auto-scroll + animation d'entrée des nouveaux messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     const last = document.querySelector(".dan-msg:last-child");
@@ -142,26 +114,48 @@ export const DanChatBot = () => {
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    setMessages((m) => [...m, { id: Date.now(), from: "user", text: trimmed }]);
+    const today = new Date().toISOString().slice(0, 10);
+    const quotaKey = "dan-msg-quota";
+    const stored = JSON.parse(localStorage.getItem(quotaKey) || "{}");
+    const usedToday = stored.date === today ? stored.count : 0;
+    if (usedToday >= 30) {
+      setMessages((m) => [
+        ...m,
+        { id: Date.now(), from: "user", text: trimmed },
+        { id: Date.now() + 1, from: "dan", text: "On a bien discuté aujourd'hui 😄 Reviens demain, ou écris directement à Zack via la section Contact !" },
+      ]);
+      setInput("");
+      return;
+    }
+    localStorage.setItem(quotaKey, JSON.stringify({ date: today, count: usedToday + 1 }));
+
+    const nextMessages = [...messages, { id: Date.now(), from: "user" as const, text: trimmed }];
+    setMessages(nextMessages);
     setInput("");
     setIsTyping(true);
     setPulseKey((k) => k + 1);
 
-    const delay = 500 + Math.random() * 500;
-    setTimeout(() => {
-      const answer = findDanAnswer(trimmed);
-      setMessages((m) => [...m, { id: Date.now() + 1, from: "dan", text: answer }]);
-      setIsTyping(false);
-    }, delay);
+    fetch("/.netlify/functions/dan-chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: trimmed, history: nextMessages }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const reply = data.reply || data.error || "Oups, un souci de mon côté 😅 Réessaie dans un instant.";
+        setMessages((m) => [...m, { id: Date.now() + 1, from: "dan", text: reply }]);
+      })
+      .catch(() => {
+        setMessages((m) => [
+          ...m,
+          { id: Date.now() + 1, from: "dan", text: "Je n'arrive pas à me connecter là 😅 Réessaie dans un instant." },
+        ]);
+      })
+      .finally(() => setIsTyping(false));
   };
 
   return (
     <>
-      {/* Dan, toujours visible au-dessus de la bulle (endormi, chat fermé) ou
-          au-dessus du panneau (éveillé, chat ouvert) — jamais démonté, pour
-          que ses comportements idle/sommeil tournent en continu. La position
-          "ouvert" se base sur la vraie hauteur mesurée du panneau (pas une
-          valeur devinée en vh), pour ne jamais sortir du cadre en haut. */}
       <div
         className="pointer-events-none fixed right-4 md:right-6 z-[60] transition-[bottom,transform] duration-700 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]"
         style={{
@@ -173,7 +167,6 @@ export const DanChatBot = () => {
         <DanCharacter mood={mood} pulseKey={pulseKey} asleep={!isOpen} />
       </div>
 
-      {/* Bulle flottante */}
       <button
         ref={(node) => {
           bubbleRef.current = node;
@@ -205,12 +198,10 @@ export const DanChatBot = () => {
         </div>
       </button>
 
-      {/* Panneau de chat */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             key="dan-widget"
-            ref={panelWrapperRef}
             className="fixed bottom-24 right-4 md:right-6 z-50 flex w-[92vw] max-w-[380px] flex-col items-center"
             style={{ transformOrigin: "bottom right" }}
             initial={{ opacity: 0, scale: 0.55, y: 60 }}
@@ -218,9 +209,7 @@ export const DanChatBot = () => {
             exit={{ opacity: 0, scale: 0.5, y: 70 }}
             transition={{ type: "spring", stiffness: 260, damping: 24 }}
           >
-            {/* Panneau de chat */}
             <div ref={panelRef} className="flex h-[65vh] max-h-[560px] w-full flex-col overflow-hidden rounded-2xl border border-[#a877fd]/30 bg-[#efe5ff] dark:bg-[#0a001a] shadow-2xl shadow-[#a877fd]/30 font2">
-              {/* Header */}
               <div className="flex items-center gap-3 bg-gradient-to-r from-[#330288] to-[#a877fd] p-4 pt-7">
                 <div className="flex-1">
                   <p className="font3 text-sm font-semibold text-white">Dan 🤖</p>
@@ -238,7 +227,6 @@ export const DanChatBot = () => {
                 </button>
               </div>
 
-              {/* Messages */}
               <div className="flex-1 space-y-3 overflow-y-auto p-4 no-visible-scrollbar">
                 {messages.map((m) => (
                   <div
@@ -273,7 +261,6 @@ export const DanChatBot = () => {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Suggestions rapides */}
               {messages.length <= 2 && (
                 <div className="flex flex-wrap gap-2 px-4 pb-2">
                   {DAN_SUGGESTIONS.map((s) => (
@@ -288,7 +275,6 @@ export const DanChatBot = () => {
                 </div>
               )}
 
-              {/* Input */}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
