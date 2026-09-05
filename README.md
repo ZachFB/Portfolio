@@ -79,4 +79,4 @@ Available directly on the site's **Contact** section, or via the footer links (L
 
 ---
 
-© 2024–2026 Dev Zack. Built with 💜 by Zacharie Sebo.
+© 2024–2026 Dev Zack. Built with 💜 by DevZack
