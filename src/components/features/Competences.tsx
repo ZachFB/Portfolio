@@ -141,7 +141,7 @@ export function Competences() {
                 ))}
             </div>
 
-            <motion.div className="relative flex flex-col items-center font3 z-10" ref={ref}
+            <motion.div className="relative flex flex-col items-center font3 z-20" ref={ref}
                 style={{ y }}
             >
                 <span className="text-2xl text-center md:mt-52 mt-32 mb-2 font3 text-[#0a001a] dark:text-[#efe5ff]">🛠️ Autres compétences</span>
